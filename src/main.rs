@@ -1,5 +1,19 @@
 #[allow(unused_imports)]
-use macroquad::{color, prelude::*, shapes, window};
+use macroquad::{prelude::*, shapes, window};
+
+const INITIAL_VELOCITY: f32 = 2.0;
+const BACKGROUND: Color = BLACK;
+const FOREGROUND: Color = BLUE;
+
+// TODO: design a win screen
+// TODO: initial ball direction should be random
+
+fn x_percentage(per: f32) -> f32 {
+    screen_width() * (per) / 100.0
+}
+fn y_percentage(per: f32) -> f32 {
+    screen_height() * (per) / 100.0
+}
 
 #[derive(Debug)]
 struct Paddle {
@@ -8,15 +22,19 @@ struct Paddle {
     width: f32,
     height: f32,
     color: Color,
+    speed: f32,
+    acc: f32,
 }
 impl Paddle {
     fn default() -> Self {
         Self {
-            x: 40.0,
-            y: 100.0,
-            width: 50.0,
-            height: 2.0,
-            color: color::BLUE,
+            x: x_percentage(50.0),
+            y: y_percentage(95.0),
+            width: x_percentage(10.0),
+            height: y_percentage(1.0),
+            color: FOREGROUND,
+            speed: 3.0,
+            acc: 1.0,
         }
     }
 }
@@ -25,16 +43,22 @@ impl Paddle {
 struct Ball {
     x: f32,
     y: f32,
+    x_vel: f32,
+    acc: f32,
+    y_vel: f32,
     radius: f32,
     color: Color,
 }
 impl Ball {
     fn default() -> Self {
         Self {
-            x: 400.0,
-            y: 100.0,
-            radius: 30.0,
-            color: color::BLUE,
+            x: x_percentage(50.0),
+            y: y_percentage(50.0),
+            x_vel: INITIAL_VELOCITY,
+            y_vel: INITIAL_VELOCITY,
+            acc: 1.0,
+            radius: x_percentage(1.0),
+            color: FOREGROUND,
         }
     }
 }
@@ -55,7 +79,7 @@ impl View {
     fn default() -> Self {
         Self {
             size: Size {
-                width: screen_height(),
+                width: screen_width(),
                 height: screen_height(),
             },
             paddle: Paddle::default(),
@@ -74,6 +98,50 @@ impl View {
         let ball = &self.ball;
         shapes::draw_circle(ball.x, ball.y, ball.radius, ball.color);
     }
+    fn update(&mut self) {
+        self.update_paddle();
+        self.update_ball();
+        self.handle_collision();
+    }
+    fn update_paddle(&mut self) {
+        let paddle = &mut self.paddle;
+        if is_key_down(KeyCode::Left) {
+            paddle.x = f32::max(paddle.x - paddle.speed * paddle.acc, 0.0)
+        } else if is_key_down(KeyCode::Right) {
+            paddle.x = f32::min(
+                paddle.x + paddle.speed * paddle.acc,
+                self.size.width - paddle.width,
+            )
+        }
+    }
+    fn update_ball(&mut self) {
+        let ball = &mut self.ball;
+        if ball.y >= self.size.height {
+            self.restart();
+            return;
+        }
+        if ball.x <= 0.0 || ball.x >= self.size.width {
+            ball.x_vel *= -1.0;
+        }
+        if ball.y <= 0.0 {
+            ball.y_vel *= -1.0;
+        }
+        ball.x += ball.x_vel * ball.acc;
+        ball.y += ball.y_vel * ball.acc;
+    }
+    fn handle_collision(&mut self) {
+        let ball = &mut self.ball;
+        let paddle = &mut self.paddle;
+        if ball.y == paddle.y && ball.x >= paddle.x && ball.x <= paddle.x + paddle.width {
+            ball.y_vel *= -1.0;
+            ball.acc += 0.01;
+            paddle.acc += 0.01;
+        }
+    }
+    fn restart(&mut self) {
+        self.paddle = Paddle::default();
+        self.ball = Ball::default();
+    }
 }
 
 #[derive(Debug)]
@@ -89,9 +157,9 @@ impl Game {
         }
     }
     async fn run(&mut self) {
-        window::clear_background(color::RED);
-
+        println!("w: {}, h: {}", screen_width(), screen_height());
         while !self.should_quit {
+            window::clear_background(BACKGROUND);
             self.view.render_frame();
 
             self.eval_event();
@@ -102,11 +170,13 @@ impl Game {
         if is_key_down(KeyCode::Q) {
             self.should_quit = true
         }
+        self.view.update();
     }
 }
 
 #[macroquad::main("Ping Pong")]
 async fn main() {
+    window::set_fullscreen(false);
     let mut game = Game::default();
     game.run().await;
 }
