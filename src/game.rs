@@ -1,7 +1,7 @@
 use color::Color;
-use input::is_key_down;
 use macroquad::miniquad::KeyCode;
-use macroquad::{color, input, window};
+use macroquad::time::get_fps;
+use macroquad::{color, input, time, window};
 
 mod view;
 use view::View;
@@ -26,22 +26,28 @@ pub struct Game {
 impl Game {
     pub async fn run(&mut self) {
         while !self.should_quit {
+            // println!("time: {}", time::get_frame_time());
+            // println!("get_fps: {}", get_fps());
             window::clear_background(BACKGROUND);
             match &self.game_state {
-                GameState::MainMenu => (),
-                GameState::SinglePlayer => self.view.render_frame(),
+                GameState::MainMenu => self.view.main_menu(),
+                GameState::SinglePlayer => {
+                    self.view.render_frame();
+                    if let GameEvent::Lost = self.view.update() {
+                        self.game_state = GameState::MainMenu;
+                    }
+                }
             }
-
             self.eval_event();
             window::next_frame().await
         }
     }
     fn eval_event(&mut self) {
-        if is_key_down(KeyCode::Q) {
+        if input::is_key_pressed(KeyCode::Q) {
             self.should_quit = true
-        }
-        if let GameEvent::Lost = self.view.update() {
-            self.game_state = GameState::MainMenu;
+        } else if input::is_key_pressed(KeyCode::R) {
+            self.game_state = GameState::SinglePlayer;
+            self.view.restart()
         }
     }
 }

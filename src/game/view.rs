@@ -2,10 +2,14 @@
 use color::Color;
 use input::is_key_down;
 use macroquad::miniquad::KeyCode;
-use macroquad::{color, input, shapes, window};
+use macroquad::text::{Font, TextParams};
+use macroquad::time::get_frame_time;
+use macroquad::{color, input, shapes, text, window};
 use window::{screen_height, screen_width};
 
-const INITIAL_VELOCITY: f32 = 2.0;
+const INITIAL_VELOCITY: f32 = 250.0; // Movement per second
+const PRIMARY_FONT_SIZE: f32 = 35.0;
+const SEC_FONT_SIZE: f32 = 30.0;
 const FOREGROUND: Color = color::BLUE;
 
 // TODO: design a score board screen
@@ -89,10 +93,17 @@ pub enum GameEvent {
 }
 
 #[derive(Debug, Default)]
+struct GameScore {
+    curr: f32,
+    highest: f32,
+}
+
+#[derive(Debug, Default)]
 pub struct View {
     size: Size,
     paddle: Paddle,
     ball: Ball,
+    score: GameScore,
 }
 impl View {
     pub fn render_frame(&mut self) {
@@ -106,6 +117,32 @@ impl View {
         );
         let ball = &self.ball;
         shapes::draw_circle(ball.x, ball.y, ball.radius, ball.color);
+    }
+    pub fn main_menu(&mut self) {
+        let main_msg = format!(
+            "Your Score: {}, Highest Score: {}",
+            self.score.curr, self.score.highest
+        );
+        let info_msgs = ["press q to exit", "press r to restart"];
+        let text_size = text::draw_text(
+            main_msg,
+            x_percentage(20.0),
+            y_percentage(50.0),
+            PRIMARY_FONT_SIZE,
+            FOREGROUND,
+        );
+
+        let mut y = 70.0;
+        for msg in info_msgs {
+            text::draw_text(
+                msg,
+                x_percentage(20.0),
+                y_percentage(y),
+                SEC_FONT_SIZE,
+                FOREGROUND,
+            );
+            y += 10.0;
+        }
     }
     pub fn update(&mut self) -> GameEvent {
         self.update_paddle();
@@ -127,6 +164,8 @@ impl View {
     fn update_ball(&mut self) -> GameEvent {
         let ball = &mut self.ball;
         if ball.y >= self.size.height {
+            // update the highest score
+            self.score.highest = self.score.highest.max(self.score.curr);
             return GameEvent::Lost;
         }
         if ball.x <= 0.0 || ball.x >= self.size.width {
@@ -135,22 +174,38 @@ impl View {
         if ball.y <= 0.0 {
             ball.y_vel *= -1.0;
         }
-        ball.x += ball.x_vel * ball.acc;
-        ball.y += ball.y_vel * ball.acc;
+        let dt = get_frame_time();
+        ball.x += ball.x_vel * ball.acc * dt;
+        ball.y += ball.y_vel * ball.acc * dt;
 
         GameEvent::None
     }
     fn handle_collision(&mut self) {
-        let ball = &mut self.ball;
-        let paddle = &mut self.paddle;
-        if ball.y == paddle.y && ball.x >= paddle.x && ball.x <= paddle.x + paddle.width {
-            ball.y_vel *= -1.0;
-            ball.acc += 0.1;
-            paddle.acc += 0.1;
+        let ball_left = self.ball.x - self.ball.radius;
+        let ball_right = self.ball.x + self.ball.radius;
+        let ball_top = self.ball.y - self.ball.radius;
+        let ball_bottom = self.ball.y + self.ball.radius;
+
+        let paddle_left = self.paddle.x;
+        let paddle_right = self.paddle.x + self.paddle.width;
+        let paddle_top = self.paddle.y;
+        let paddle_bottom = self.paddle.y + self.paddle.height;
+
+        let overlap = ball_left <= paddle_right
+            && ball_right >= paddle_left
+            && ball_bottom >= paddle_top
+            && ball_top <= paddle_bottom;
+
+        if overlap && self.ball.y_vel > 0.0 {
+            self.ball.y_vel *= -1.0;
+            self.ball.acc += 0.1;
+            self.paddle.acc += 0.1;
+            self.score.curr += 1.0;
         }
     }
-    fn restart(&mut self) {
+    pub fn restart(&mut self) {
         self.paddle = Paddle::default();
         self.ball = Ball::default();
+        self.score.curr = 0.0;
     }
 }
