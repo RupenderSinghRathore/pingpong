@@ -2,17 +2,16 @@
 use color::Color;
 use input::is_key_down;
 use macroquad::miniquad::KeyCode;
-use macroquad::text::{Font, TextParams};
+use macroquad::text::{Font, TextParams, measure_text};
 use macroquad::time::get_frame_time;
 use macroquad::{color, input, shapes, text, window};
 use window::{screen_height, screen_width};
 
 const INITIAL_VELOCITY: f32 = 250.0; // Movement per second
+const PADDLE_SPEED: f32 = 450.0;
 const PRIMARY_FONT_SIZE: f32 = 35.0;
 const SEC_FONT_SIZE: f32 = 30.0;
 const FOREGROUND: Color = color::BLUE;
-
-// TODO: design a score board screen
 
 fn x_percentage(per: f32) -> f32 {
     screen_width() * (per) / 100.0
@@ -39,7 +38,7 @@ impl Default for Paddle {
             width: x_percentage(10.0),
             height: y_percentage(1.0),
             color: FOREGROUND,
-            speed: 3.0,
+            speed: PADDLE_SPEED,
             acc: 1.0,
         }
     }
@@ -98,6 +97,12 @@ struct GameScore {
     highest: f32,
 }
 
+// setup font settings
+struct FontSetting {
+    font: Font,
+    font_scale: u16,
+}
+
 #[derive(Debug, Default)]
 pub struct View {
     size: Size,
@@ -124,6 +129,7 @@ impl View {
             self.score.curr, self.score.highest
         );
         let info_msgs = ["press q to exit", "press r to restart"];
+        // let msg_size = text::measure_text(main_msg, Font::default(), 15, PRIMARY_FONT_SIZE);
         let text_size = text::draw_text(
             main_msg,
             x_percentage(20.0),
@@ -152,13 +158,12 @@ impl View {
     }
     fn update_paddle(&mut self) {
         let paddle = &mut self.paddle;
+        let dt = get_frame_time();
+        let change = paddle.speed * paddle.acc * dt;
         if is_key_down(KeyCode::Left) {
-            paddle.x = f32::max(paddle.x - paddle.speed * paddle.acc, 0.0)
+            paddle.x = f32::max(paddle.x - change, 0.0)
         } else if is_key_down(KeyCode::Right) {
-            paddle.x = f32::min(
-                paddle.x + paddle.speed * paddle.acc,
-                self.size.width - paddle.width,
-            )
+            paddle.x = f32::min(paddle.x + change, self.size.width - paddle.width)
         }
     }
     fn update_ball(&mut self) -> GameEvent {
