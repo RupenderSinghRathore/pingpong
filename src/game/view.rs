@@ -8,7 +8,7 @@ use window::{screen_height, screen_width};
 const INITIAL_VELOCITY: f32 = 2.0;
 const FOREGROUND: Color = color::BLUE;
 
-// TODO: design a win screen
+// TODO: design a score board screen
 
 fn x_percentage(per: f32) -> f32 {
     screen_width() * (per) / 100.0

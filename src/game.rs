@@ -2,7 +2,6 @@ use color::Color;
 use input::is_key_down;
 use macroquad::miniquad::KeyCode;
 use macroquad::{color, input, window};
-use window::{screen_height, screen_width};
 
 mod view;
 use view::View;
