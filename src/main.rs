@@ -1,12 +1,15 @@
 #[allow(unused_imports)]
-use macroquad::{prelude::*, shapes, window};
+use color::Color;
+use input::is_key_down;
+use macroquad::miniquad::KeyCode;
+use macroquad::{color, input, shapes, window};
+use window::{screen_height, screen_width};
 
 const INITIAL_VELOCITY: f32 = 2.0;
-const BACKGROUND: Color = BLACK;
-const FOREGROUND: Color = BLUE;
+const BACKGROUND: Color = color::BLACK;
+const FOREGROUND: Color = color::BLUE;
 
 // TODO: design a win screen
-// TODO: initial ball direction should be random
 
 fn x_percentage(per: f32) -> f32 {
     screen_width() * (per) / 100.0
@@ -51,11 +54,13 @@ struct Ball {
 }
 impl Ball {
     fn default() -> Self {
+        let x_dir = if rand::random_bool(0.5) { 1.0 } else { -1.0 };
+        let y_dir = if rand::random_bool(0.5) { 1.0 } else { -1.0 };
         Self {
             x: x_percentage(50.0),
             y: y_percentage(50.0),
-            x_vel: INITIAL_VELOCITY,
-            y_vel: INITIAL_VELOCITY,
+            x_vel: INITIAL_VELOCITY * x_dir,
+            y_vel: INITIAL_VELOCITY * y_dir,
             acc: 1.0,
             radius: x_percentage(1.0),
             color: FOREGROUND,
