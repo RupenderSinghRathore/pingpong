@@ -7,11 +7,13 @@ use macroquad::time::get_frame_time;
 use macroquad::{color, input, shapes, text, window};
 use window::{screen_height, screen_width};
 
+const CYAN: Color = color::Color::from_hex(0x42efab);
+
 const INITIAL_VELOCITY: f32 = 250.0; // Movement per second
 const PADDLE_SPEED: f32 = 450.0;
 const PRIMARY_FONT_SIZE: f32 = 35.0;
 const SEC_FONT_SIZE: f32 = 30.0;
-const FOREGROUND: Color = color::BLUE;
+const FOREGROUND: Color = CYAN;
 
 fn x_percentage(per: f32) -> f32 {
     screen_width() * (per) / 100.0

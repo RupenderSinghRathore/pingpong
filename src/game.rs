@@ -8,7 +8,8 @@ use view::View;
 
 use crate::game::view::GameEvent;
 
-const BACKGROUND: Color = color::BLACK;
+const LIGHT_BLUE: Color = color::Color::from_hex(0x31455c);
+const BACKGROUND: Color = LIGHT_BLUE;
 
 #[derive(Debug, Default)]
 enum GameState {
