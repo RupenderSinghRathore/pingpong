@@ -1,7 +1,6 @@
 use color::Color;
 use macroquad::miniquad::KeyCode;
-use macroquad::time::get_fps;
-use macroquad::{color, input, time, window};
+use macroquad::{color, input, window};
 
 mod view;
 use view::GamePlay;
@@ -27,8 +26,6 @@ pub struct Game {
 impl Game {
     pub async fn run(&mut self) {
         while !self.should_quit {
-            // println!("time: {}", time::get_frame_time());
-            // println!("get_fps: {}", get_fps());
             window::clear_background(BACKGROUND);
             match &self.game_state {
                 GameState::MainMenu => self.view.main_menu(),
