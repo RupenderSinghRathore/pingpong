@@ -4,7 +4,7 @@ use macroquad::time::get_fps;
 use macroquad::{color, input, time, window};
 
 mod view;
-use view::View;
+use view::GamePlay;
 
 use crate::game::view::GameEvent;
 
@@ -21,7 +21,7 @@ enum GameState {
 #[derive(Debug, Default)]
 pub struct Game {
     should_quit: bool,
-    view: View,
+    view: GamePlay,
     game_state: GameState,
 }
 impl Game {
@@ -34,7 +34,8 @@ impl Game {
                 GameState::MainMenu => self.view.main_menu(),
                 GameState::SinglePlayer => {
                     self.view.render_frame();
-                    if let GameEvent::Lost = self.view.update() {
+                    self.view.update();
+                    if let GameEvent::Lost = self.view.handle_collision() {
                         self.game_state = GameState::MainMenu;
                     }
                 }

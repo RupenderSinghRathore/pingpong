@@ -15,6 +15,10 @@ const PRIMARY_FONT_SIZE: f32 = 35.0;
 const SEC_FONT_SIZE: f32 = 30.0;
 const FOREGROUND: Color = CYAN;
 
+// TODO: Refactor the code
+// TODO: Fix text rendering position
+// TODO: Get better collisions
+
 fn x_percentage(per: f32) -> f32 {
     screen_width() * (per) / 100.0
 }
@@ -106,13 +110,13 @@ struct FontSetting {
 }
 
 #[derive(Debug, Default)]
-pub struct View {
+pub struct GamePlay {
     size: Size,
     paddle: Paddle,
     ball: Ball,
     score: GameScore,
 }
-impl View {
+impl GamePlay {
     pub fn render_frame(&mut self) {
         let paddle = &self.paddle;
         shapes::draw_rectangle(
@@ -152,11 +156,13 @@ impl View {
             y += 10.0;
         }
     }
-    pub fn update(&mut self) -> GameEvent {
+    pub fn update(&mut self) {
         self.update_paddle();
-        let game_state = self.update_ball();
-        self.handle_collision();
-        game_state
+        self.update_ball();
+    }
+    pub fn handle_collision(&mut self) -> GameEvent {
+        self.paddle_collision();
+        self.wall_collision()
     }
     fn update_paddle(&mut self) {
         let paddle = &mut self.paddle;
@@ -168,26 +174,34 @@ impl View {
             paddle.x = f32::min(paddle.x + change, self.size.width - paddle.width)
         }
     }
-    fn update_ball(&mut self) -> GameEvent {
+    fn wall_collision(&mut self) -> GameEvent {
         let ball = &mut self.ball;
-        if ball.y >= self.size.height {
+        let radius = ball.radius;
+        if ball.y >= self.size.height - radius {
             // update the highest score
             self.score.highest = self.score.highest.max(self.score.curr);
             return GameEvent::Lost;
         }
-        if ball.x <= 0.0 || ball.x >= self.size.width {
+        if ball.x <= radius && ball.x_vel < 0.0 {
             ball.x_vel *= -1.0;
+            ball.x = radius;
+        } else if ball.x >= self.size.width - radius && ball.x_vel > 0.0 {
+            ball.x_vel *= -1.0;
+            ball.x = self.size.width - radius;
         }
-        if ball.y <= 0.0 {
+        if ball.y <= radius && ball.y_vel <= 0.0 {
             ball.y_vel *= -1.0;
+            ball.y = radius;
         }
+        GameEvent::None
+    }
+    fn update_ball(&mut self) {
+        let ball = &mut self.ball;
         let dt = get_frame_time();
         ball.x += ball.x_vel * ball.acc * dt;
         ball.y += ball.y_vel * ball.acc * dt;
-
-        GameEvent::None
     }
-    fn handle_collision(&mut self) {
+    fn paddle_collision(&mut self) {
         let ball_left = self.ball.x - self.ball.radius;
         let ball_right = self.ball.x + self.ball.radius;
         let ball_top = self.ball.y - self.ball.radius;
@@ -208,6 +222,7 @@ impl View {
             self.ball.acc += 0.1;
             self.paddle.acc += 0.1;
             self.score.curr += 1.0;
+            self.ball.y = ball_top - self.ball.radius;
         }
     }
     pub fn restart(&mut self) {
