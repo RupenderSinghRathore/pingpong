@@ -2,22 +2,28 @@
 use color::Color;
 use input::is_key_down;
 use macroquad::miniquad::KeyCode;
-use macroquad::text::{Font, TextParams, measure_text};
+use macroquad::text::{Font, TextParams, load_ttf_font_from_bytes};
 use macroquad::time::get_frame_time;
 use macroquad::{color, input, shapes, text, window};
 use window::{screen_height, screen_width};
 
 const CYAN: Color = color::Color::from_hex(0x42efab);
+const FOREGROUND: Color = CYAN;
 
 const INITIAL_VELOCITY: f32 = 250.0; // Movement per second
 const PADDLE_SPEED: f32 = 450.0;
-const PRIMARY_FONT_SIZE: f32 = 35.0;
-const SEC_FONT_SIZE: f32 = 30.0;
-const FOREGROUND: Color = CYAN;
 
-// TODO: Refactor the code
-// TODO: Fix text rendering position
-// TODO: Get better collisions
+// Font defaults
+const FIRACODENERDFONT_REGULAR: &[u8] =
+    include_bytes!("/usr/share/fonts/TTF/FiraCodeNerdFont-Regular.ttf");
+const FONT_SIZE: u16 = 25;
+const FONT_SCALE: f32 = 1.0;
+const FONT_ASPECT_RATIO: f32 = 1.0;
+const FONT_ROTATION: f32 = 0.0;
+const FONT_COLOR: Color = FOREGROUND;
+
+// TODO: Persist highest score
+// TODO: Implement history based collisions
 
 fn x_percentage(per: f32) -> f32 {
     screen_width() * (per) / 100.0
@@ -92,6 +98,35 @@ impl Default for Size {
 }
 
 #[derive(Debug)]
+struct WriterSettings {
+    font: Font,
+    font_size: u16,
+    font_scale: f32,
+    font_aspect_ratio: f32,
+    rotation: f32,
+    color: Color,
+}
+impl Default for WriterSettings {
+    fn default() -> Self {
+        let font = match load_ttf_font_from_bytes(FIRACODENERDFONT_REGULAR) {
+            Ok(f) => f,
+            Err(_) => {
+                eprintln!("FiraCodeNerdFont-Regular not available, using defaults");
+                text::get_default_font()
+            }
+        };
+        Self {
+            font,
+            font_size: FONT_SIZE,
+            font_scale: FONT_SCALE,
+            font_aspect_ratio: FONT_ASPECT_RATIO,
+            rotation: FONT_ROTATION,
+            color: FONT_COLOR,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum GameEvent {
     None,
     Lost,
@@ -103,18 +138,13 @@ struct GameScore {
     highest: f32,
 }
 
-// setup font settings
-struct FontSetting {
-    font: Font,
-    font_scale: u16,
-}
-
 #[derive(Debug, Default)]
 pub struct GamePlay {
     size: Size,
     paddle: Paddle,
     ball: Ball,
     score: GameScore,
+    writer_settings: WriterSettings,
 }
 impl GamePlay {
     pub fn render_frame(&mut self) {
@@ -130,30 +160,46 @@ impl GamePlay {
         shapes::draw_circle(ball.x, ball.y, ball.radius, ball.color);
     }
     pub fn main_menu(&mut self) {
+        let textparams = TextParams {
+            font: Some(&self.writer_settings.font),
+            font_size: self.writer_settings.font_size,
+            font_scale: self.writer_settings.font_scale,
+            font_scale_aspect: self.writer_settings.font_aspect_ratio,
+            rotation: self.writer_settings.rotation,
+            color: self.writer_settings.color,
+        };
         let main_msg = format!(
             "Your Score: {}, Highest Score: {}",
             self.score.curr, self.score.highest
         );
         let info_msgs = ["press q to exit", "press r to restart"];
-        // let msg_size = text::measure_text(main_msg, Font::default(), 15, PRIMARY_FONT_SIZE);
-        let text_size = text::draw_text(
-            main_msg,
-            x_percentage(20.0),
-            y_percentage(50.0),
-            PRIMARY_FONT_SIZE,
-            FOREGROUND,
+
+        let msg_size = text::measure_text(
+            &main_msg,
+            textparams.font,
+            textparams.font_size,
+            textparams.font_scale,
         );
 
-        let mut y = 70.0;
+        let mut y_gap = 40.0;
+        let x_pos = x_percentage(50.0) - (msg_size.width / 2.0);
+        let y_pos = y_percentage(y_gap);
+        y_gap += 20.0;
+
+        text::draw_text_ex(main_msg, x_pos, y_pos, textparams.clone());
+
         for msg in info_msgs {
-            text::draw_text(
+            let msg_size = text::measure_text(
                 msg,
-                x_percentage(20.0),
-                y_percentage(y),
-                SEC_FONT_SIZE,
-                FOREGROUND,
+                textparams.font,
+                textparams.font_size,
+                textparams.font_scale,
             );
-            y += 10.0;
+
+            let x_pos = x_percentage(50.0) - (msg_size.width / 2.0);
+            let y_pos = y_percentage(y_gap);
+            text::draw_text_ex(msg, x_pos, y_pos, textparams.clone());
+            y_gap += 10.0;
         }
     }
     pub fn update(&mut self) {

@@ -1,11 +1,10 @@
 use color::Color;
 use macroquad::miniquad::KeyCode;
 use macroquad::{color, input, window};
+mod gameplay;
+use gameplay::GamePlay;
 
-mod view;
-use view::GamePlay;
-
-use crate::game::view::GameEvent;
+use crate::game::gameplay::GameEvent;
 
 const LIGHT_BLUE: Color = color::Color::from_hex(0x31455c);
 const BACKGROUND: Color = LIGHT_BLUE;
@@ -14,6 +13,7 @@ const BACKGROUND: Color = LIGHT_BLUE;
 enum GameState {
     #[default]
     SinglePlayer,
+
     MainMenu,
 }
 
