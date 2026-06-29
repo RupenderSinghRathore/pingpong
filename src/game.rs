@@ -41,9 +41,23 @@ impl Game {
             window::next_frame().await
         }
     }
+    pub fn read_cache(&mut self) {
+        if let Err(e) = self.view.read_cache() {
+            eprint!("error reading cache: {}", e);
+        }
+    }
     fn eval_event(&mut self) {
         if input::is_key_pressed(KeyCode::Q) {
-            self.should_quit = true
+            match self.game_state {
+                GameState::SinglePlayer => self.game_state = GameState::MainMenu,
+                GameState::MainMenu => {
+                    self.view.reset_score();
+                    if let Err(e) = self.view.write_cache() {
+                        eprint!("error writing cache: {}", e);
+                    }
+                    self.should_quit = true
+                }
+            }
         } else if input::is_key_pressed(KeyCode::R) {
             self.game_state = GameState::SinglePlayer;
             self.view.restart()

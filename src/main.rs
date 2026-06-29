@@ -15,5 +15,6 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut g = game::Game::default();
+    g.read_cache();
     g.run().await;
 }

@@ -1,10 +1,13 @@
-#[allow(unused_imports)]
 use color::Color;
 use input::is_key_down;
 use macroquad::miniquad::KeyCode;
 use macroquad::text::{Font, TextParams, load_ttf_font_from_bytes};
 use macroquad::time::get_frame_time;
 use macroquad::{color, input, shapes, text, window};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::io;
+use std::path::PathBuf;
 use window::{screen_height, screen_width};
 
 const CYAN: Color = color::Color::from_hex(0x42efab);
@@ -22,6 +25,10 @@ const FONT_ASPECT_RATIO: f32 = 1.0;
 const FONT_ROTATION: f32 = 0.0;
 const FONT_COLOR: Color = FOREGROUND;
 
+const CACHE_PATH: &str = ".local/share/pingpong";
+const CACHE_FILE: &str = "highest.json";
+
+// TODO: Implement json parsing using serde
 // TODO: Persist highest score
 // TODO: Implement history based collisions
 
@@ -132,7 +139,7 @@ pub enum GameEvent {
     Lost,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 struct GameScore {
     curr: f32,
     highest: f32,
@@ -210,6 +217,38 @@ impl GamePlay {
         self.paddle_collision();
         self.wall_collision()
     }
+    pub fn reset_score(&mut self) {
+        self.score.curr = 0.0;
+    }
+    pub fn write_cache(&self) -> Result<(), io::Error> {
+        let json_data = serde_json::to_string(&self.score)?;
+        let cache_dir = match get_cache_path() {
+            Some(v) => v,
+            None => {
+                return Err(io::Error::new(io::ErrorKind::NotFound, "home not found!"));
+            }
+        };
+        let mut p = PathBuf::from(&cache_dir);
+        fs::create_dir_all(&p)?;
+        p.push(CACHE_FILE);
+        fs::write(p, json_data)?;
+        Ok(())
+    }
+    pub fn read_cache(&mut self) -> Result<(), io::Error> {
+        let cache_dir = match get_cache_path() {
+            Some(v) => v,
+            None => {
+                return Err(io::Error::new(io::ErrorKind::NotFound, "home not found!"));
+            }
+        };
+        let mut p = PathBuf::from(&cache_dir);
+        fs::create_dir_all(&p)?;
+        p.push(CACHE_FILE);
+        let json_data = fs::read_to_string(p)?;
+        let score: GameScore = serde_json::from_str(&json_data)?;
+        self.score = score;
+        Ok(())
+    }
     fn update_paddle(&mut self) {
         let paddle = &mut self.paddle;
         let dt = get_frame_time();
@@ -276,4 +315,8 @@ impl GamePlay {
         self.ball = Ball::default();
         self.score.curr = 0.0;
     }
+}
+
+fn get_cache_path() -> Option<String> {
+    std::env::home_dir().map(|home| format!("{}{}{}", home.to_str().unwrap(), "/", CACHE_PATH))
 }
