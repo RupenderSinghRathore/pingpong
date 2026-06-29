@@ -1,17 +1,10 @@
+use super::view::FOREGROUND;
+use super::view::{x_percentage, y_percentage};
 use color::Color;
-use input::is_key_down;
-use macroquad::miniquad::KeyCode;
-use macroquad::text::{Font, TextParams, load_ttf_font_from_bytes};
-use macroquad::time::get_frame_time;
-use macroquad::{color, input, shapes, text, window};
+use macroquad::text::{Font, load_ttf_font_from_bytes};
+use macroquad::{color, text, window};
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::io;
-use std::path::PathBuf;
 use window::{screen_height, screen_width};
-
-const CYAN: Color = color::Color::from_hex(0x42efab);
-const FOREGROUND: Color = CYAN;
 
 const INITIAL_VELOCITY: f32 = 250.0; // Movement per second
 const PADDLE_SPEED: f32 = 450.0;
@@ -25,30 +18,17 @@ const FONT_ASPECT_RATIO: f32 = 1.0;
 const FONT_ROTATION: f32 = 0.0;
 const FONT_COLOR: Color = FOREGROUND;
 
-const CACHE_PATH: &str = ".local/share/pingpong";
-const CACHE_FILE: &str = "highest.json";
-
-// TODO: Implement json parsing using serde
-// TODO: Persist highest score
-// TODO: Implement history based collisions
-
-fn x_percentage(per: f32) -> f32 {
-    screen_width() * (per) / 100.0
-}
-fn y_percentage(per: f32) -> f32 {
-    screen_height() * (per) / 100.0
-}
-
 #[derive(Debug)]
-struct Paddle {
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
-    color: Color,
-    speed: f32,
-    acc: f32,
+pub(super) struct Paddle {
+    pub(super) x: f32,
+    pub(super) y: f32,
+    pub(super) width: f32,
+    pub(super) height: f32,
+    pub(super) color: Color,
+    pub(super) speed: f32,
+    pub(super) acc: f32,
 }
+
 impl Default for Paddle {
     fn default() -> Self {
         Self {
@@ -64,14 +44,14 @@ impl Default for Paddle {
 }
 
 #[derive(Debug)]
-struct Ball {
-    x: f32,
-    y: f32,
-    x_vel: f32,
-    acc: f32,
-    y_vel: f32,
-    radius: f32,
-    color: Color,
+pub(super) struct Ball {
+    pub(super) x: f32,
+    pub(super) y: f32,
+    pub(super) x_vel: f32,
+    pub(super) acc: f32,
+    pub(super) y_vel: f32,
+    pub(super) radius: f32,
+    pub(super) color: Color,
 }
 impl Default for Ball {
     fn default() -> Self {
@@ -90,9 +70,9 @@ impl Default for Ball {
 }
 
 #[derive(Debug)]
-struct Size {
-    width: f32,
-    height: f32,
+pub(super) struct Size {
+ pub(super)   width: f32,
+ pub(super)   height: f32,
 }
 
 impl Default for Size {
@@ -105,13 +85,13 @@ impl Default for Size {
 }
 
 #[derive(Debug)]
-struct WriterSettings {
-    font: Font,
-    font_size: u16,
-    font_scale: f32,
-    font_aspect_ratio: f32,
-    rotation: f32,
-    color: Color,
+pub(super) struct WriterSettings {
+    pub(super) font: Font,
+    pub(super) font_size: u16,
+    pub(super) font_scale: f32,
+    pub(super) font_aspect_ratio: f32,
+    pub(super) rotation: f32,
+    pub(super) color: Color,
 }
 impl Default for WriterSettings {
     fn default() -> Self {
@@ -134,189 +114,22 @@ impl Default for WriterSettings {
 }
 
 #[derive(Debug)]
-pub enum GameEvent {
+pub(super) enum GameEvent {
     None,
     Lost,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
-struct GameScore {
-    curr: f32,
-    highest: f32,
+pub(super) struct GameScore {
+    pub curr: f32,
+    pub highest: f32,
 }
 
 #[derive(Debug, Default)]
-pub struct GamePlay {
-    size: Size,
-    paddle: Paddle,
-    ball: Ball,
-    score: GameScore,
-    writer_settings: WriterSettings,
-}
-impl GamePlay {
-    pub fn render_frame(&mut self) {
-        let paddle = &self.paddle;
-        shapes::draw_rectangle(
-            paddle.x,
-            paddle.y,
-            paddle.width,
-            paddle.height,
-            paddle.color,
-        );
-        let ball = &self.ball;
-        shapes::draw_circle(ball.x, ball.y, ball.radius, ball.color);
-    }
-    pub fn main_menu(&mut self) {
-        let textparams = TextParams {
-            font: Some(&self.writer_settings.font),
-            font_size: self.writer_settings.font_size,
-            font_scale: self.writer_settings.font_scale,
-            font_scale_aspect: self.writer_settings.font_aspect_ratio,
-            rotation: self.writer_settings.rotation,
-            color: self.writer_settings.color,
-        };
-        let main_msg = format!(
-            "Your Score: {}, Highest Score: {}",
-            self.score.curr, self.score.highest
-        );
-        let info_msgs = ["press q to exit", "press r to restart"];
-
-        let msg_size = text::measure_text(
-            &main_msg,
-            textparams.font,
-            textparams.font_size,
-            textparams.font_scale,
-        );
-
-        let mut y_gap = 40.0;
-        let x_pos = x_percentage(50.0) - (msg_size.width / 2.0);
-        let y_pos = y_percentage(y_gap);
-        y_gap += 20.0;
-
-        text::draw_text_ex(main_msg, x_pos, y_pos, textparams.clone());
-
-        for msg in info_msgs {
-            let msg_size = text::measure_text(
-                msg,
-                textparams.font,
-                textparams.font_size,
-                textparams.font_scale,
-            );
-
-            let x_pos = x_percentage(50.0) - (msg_size.width / 2.0);
-            let y_pos = y_percentage(y_gap);
-            text::draw_text_ex(msg, x_pos, y_pos, textparams.clone());
-            y_gap += 10.0;
-        }
-    }
-    pub fn update(&mut self) {
-        self.update_paddle();
-        self.update_ball();
-    }
-    pub fn handle_collision(&mut self) -> GameEvent {
-        self.paddle_collision();
-        self.wall_collision()
-    }
-    pub fn reset_score(&mut self) {
-        self.score.curr = 0.0;
-    }
-    pub fn write_cache(&self) -> Result<(), io::Error> {
-        let json_data = serde_json::to_string(&self.score)?;
-        let cache_dir = match get_cache_path() {
-            Some(v) => v,
-            None => {
-                return Err(io::Error::new(io::ErrorKind::NotFound, "home not found!"));
-            }
-        };
-        let mut p = PathBuf::from(&cache_dir);
-        fs::create_dir_all(&p)?;
-        p.push(CACHE_FILE);
-        fs::write(p, json_data)?;
-        Ok(())
-    }
-    pub fn read_cache(&mut self) -> Result<(), io::Error> {
-        let cache_dir = match get_cache_path() {
-            Some(v) => v,
-            None => {
-                return Err(io::Error::new(io::ErrorKind::NotFound, "home not found!"));
-            }
-        };
-        let mut p = PathBuf::from(&cache_dir);
-        fs::create_dir_all(&p)?;
-        p.push(CACHE_FILE);
-        let json_data = fs::read_to_string(p)?;
-        let score: GameScore = serde_json::from_str(&json_data)?;
-        self.score = score;
-        Ok(())
-    }
-    fn update_paddle(&mut self) {
-        let paddle = &mut self.paddle;
-        let dt = get_frame_time();
-        let change = paddle.speed * paddle.acc * dt;
-        if is_key_down(KeyCode::Left) {
-            paddle.x = f32::max(paddle.x - change, 0.0)
-        } else if is_key_down(KeyCode::Right) {
-            paddle.x = f32::min(paddle.x + change, self.size.width - paddle.width)
-        }
-    }
-    fn wall_collision(&mut self) -> GameEvent {
-        let ball = &mut self.ball;
-        let radius = ball.radius;
-        if ball.y >= self.size.height - radius {
-            // update the highest score
-            self.score.highest = self.score.highest.max(self.score.curr);
-            return GameEvent::Lost;
-        }
-        if ball.x <= radius && ball.x_vel < 0.0 {
-            ball.x_vel *= -1.0;
-            ball.x = radius;
-        } else if ball.x >= self.size.width - radius && ball.x_vel > 0.0 {
-            ball.x_vel *= -1.0;
-            ball.x = self.size.width - radius;
-        }
-        if ball.y <= radius && ball.y_vel <= 0.0 {
-            ball.y_vel *= -1.0;
-            ball.y = radius;
-        }
-        GameEvent::None
-    }
-    fn update_ball(&mut self) {
-        let ball = &mut self.ball;
-        let dt = get_frame_time();
-        ball.x += ball.x_vel * ball.acc * dt;
-        ball.y += ball.y_vel * ball.acc * dt;
-    }
-    fn paddle_collision(&mut self) {
-        let ball_left = self.ball.x - self.ball.radius;
-        let ball_right = self.ball.x + self.ball.radius;
-        let ball_top = self.ball.y - self.ball.radius;
-        let ball_bottom = self.ball.y + self.ball.radius;
-
-        let paddle_left = self.paddle.x;
-        let paddle_right = self.paddle.x + self.paddle.width;
-        let paddle_top = self.paddle.y;
-        let paddle_bottom = self.paddle.y + self.paddle.height;
-
-        let overlap = ball_left <= paddle_right
-            && ball_right >= paddle_left
-            && ball_bottom >= paddle_top
-            && ball_top <= paddle_bottom;
-
-        if overlap && self.ball.y_vel > 0.0 {
-            self.ball.y_vel *= -1.0;
-            self.ball.acc += 0.1;
-            self.paddle.acc += 0.1;
-            self.score.curr += 1.0;
-            self.ball.y = ball_top - self.ball.radius;
-        }
-    }
-    pub fn restart(&mut self) {
-        self.paddle = Paddle::default();
-        self.ball = Ball::default();
-        self.score.curr = 0.0;
-    }
-}
-
-fn get_cache_path() -> Option<String> {
-    std::env::home_dir().map(|home| format!("{}{}{}", home.to_str().unwrap(), "/", CACHE_PATH))
+pub(super) struct GamePlay {
+    pub(super) size: Size,
+    pub(super) paddle: Paddle,
+    pub(super) ball: Ball,
+    pub(super) score: GameScore,
+    pub(super) writer_settings: WriterSettings,
 }

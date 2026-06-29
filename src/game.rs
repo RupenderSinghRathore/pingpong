@@ -1,10 +1,12 @@
 use color::Color;
 use macroquad::miniquad::KeyCode;
 use macroquad::{color, input, window};
-mod gameplay;
-use gameplay::GamePlay;
 
-use crate::game::gameplay::GameEvent;
+mod cache;
+mod controler;
+mod gameplay;
+mod view;
+use crate::game::gameplay::{GameEvent, GamePlay};
 
 const LIGHT_BLUE: Color = color::Color::from_hex(0x31455c);
 const BACKGROUND: Color = LIGHT_BLUE;
