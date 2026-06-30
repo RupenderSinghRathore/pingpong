@@ -15,7 +15,6 @@ const BACKGROUND: Color = LIGHT_BLUE;
 enum GameState {
     #[default]
     SinglePlayer,
-
     MainMenu,
 }
 
@@ -27,6 +26,7 @@ pub struct Game {
 }
 impl Game {
     pub async fn run(&mut self) {
+        input::prevent_quit();
         while !self.should_quit {
             window::clear_background(BACKGROUND);
             match &self.game_state {
@@ -50,7 +50,7 @@ impl Game {
         }
     }
     fn eval_event(&mut self) {
-        if input::is_key_pressed(KeyCode::Q) {
+        if input::is_quit_requested() || input::is_key_pressed(KeyCode::Q) {
             self.gameplay.update_highest_score();
             match self.game_state {
                 GameState::SinglePlayer => self.game_state = GameState::MainMenu,
