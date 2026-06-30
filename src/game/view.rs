@@ -16,6 +16,7 @@ pub(super) fn y_percentage(per: f32) -> f32 {
 
 impl Gameplay {
     pub fn render_frame(&mut self) {
+        self.handle_resize();
         let paddle = &self.paddle;
         shapes::draw_rectangle(
             paddle.x,
@@ -26,6 +27,13 @@ impl Gameplay {
         );
         let ball = &self.ball;
         shapes::draw_circle(ball.x, ball.y, ball.radius, ball.color);
+    }
+    fn handle_resize(&mut self) {
+        let (w, h) = (screen_width(), screen_height());
+        if self.size.width != w || self.size.height != h {
+            self.size.width = w;
+            self.size.height = h;
+        }
     }
     pub fn main_menu(&mut self) {
         let textparams = TextParams {
