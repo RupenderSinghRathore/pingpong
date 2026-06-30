@@ -2,12 +2,12 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use super::gameplay::{GamePlay, GameScore};
+use super::gameplay::{GameScore, Gameplay};
 
 const CACHE_PATH: &str = ".local/share/pingpong";
 const CACHE_FILE: &str = "highest.json";
 
-impl GamePlay {
+impl Gameplay {
     pub fn write_cache(&self) -> Result<(), io::Error> {
         let json_data = serde_json::to_string(&self.score)?;
         let cache_dir = match get_cache_path() {

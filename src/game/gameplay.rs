@@ -22,6 +22,8 @@ const FONT_COLOR: Color = FOREGROUND;
 pub(super) struct Paddle {
     pub(super) x: f32,
     pub(super) y: f32,
+    pub(super) prev_x: f32,
+    pub(super) prev_y: f32,
     pub(super) width: f32,
     pub(super) height: f32,
     pub(super) color: Color,
@@ -34,6 +36,8 @@ impl Default for Paddle {
         Self {
             x: x_percentage(50.0),
             y: y_percentage(95.0),
+            prev_x: 0.0,
+            prev_y: 0.0,
             width: x_percentage(10.0),
             height: y_percentage(1.0),
             color: FOREGROUND,
@@ -47,6 +51,8 @@ impl Default for Paddle {
 pub(super) struct Ball {
     pub(super) x: f32,
     pub(super) y: f32,
+    pub(super) prev_x: f32,
+    pub(super) prev_y: f32,
     pub(super) x_vel: f32,
     pub(super) acc: f32,
     pub(super) y_vel: f32,
@@ -60,6 +66,8 @@ impl Default for Ball {
         Self {
             x: x_percentage(50.0),
             y: y_percentage(50.0),
+            prev_x: 0.0,
+            prev_y: 0.0,
             x_vel: INITIAL_VELOCITY * x_dir,
             y_vel: INITIAL_VELOCITY * y_dir,
             acc: 1.0,
@@ -71,8 +79,8 @@ impl Default for Ball {
 
 #[derive(Debug)]
 pub(super) struct Size {
- pub(super)   width: f32,
- pub(super)   height: f32,
+    pub(super) width: f32,
+    pub(super) height: f32,
 }
 
 impl Default for Size {
@@ -126,7 +134,7 @@ pub(super) struct GameScore {
 }
 
 #[derive(Debug, Default)]
-pub(super) struct GamePlay {
+pub(super) struct Gameplay {
     pub(super) size: Size,
     pub(super) paddle: Paddle,
     pub(super) ball: Ball,

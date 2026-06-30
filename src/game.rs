@@ -6,7 +6,7 @@ mod cache;
 mod controler;
 mod gameplay;
 mod view;
-use crate::game::gameplay::{GameEvent, GamePlay};
+use crate::game::gameplay::{GameEvent, Gameplay};
 
 const LIGHT_BLUE: Color = color::Color::from_hex(0x31455c);
 const BACKGROUND: Color = LIGHT_BLUE;
@@ -22,7 +22,7 @@ enum GameState {
 #[derive(Debug, Default)]
 pub struct Game {
     should_quit: bool,
-    view: GamePlay,
+    gameplay: Gameplay,
     game_state: GameState,
 }
 impl Game {
@@ -30,11 +30,12 @@ impl Game {
         while !self.should_quit {
             window::clear_background(BACKGROUND);
             match &self.game_state {
-                GameState::MainMenu => self.view.main_menu(),
+                GameState::MainMenu => self.gameplay.main_menu(),
                 GameState::SinglePlayer => {
-                    self.view.render_frame();
-                    self.view.update();
-                    if let GameEvent::Lost = self.view.handle_collision() {
+                    self.gameplay.render_frame();
+                    self.gameplay.update();
+                    if let GameEvent::Lost = self.gameplay.handle_collision() {
+                        self.gameplay.update_highest_score();
                         self.game_state = GameState::MainMenu;
                     }
                 }
@@ -44,25 +45,26 @@ impl Game {
         }
     }
     pub fn read_cache(&mut self) {
-        if let Err(e) = self.view.read_cache() {
-            eprint!("error reading cache: {}", e);
+        if let Err(e) = self.gameplay.read_cache() {
+            eprintln!("error reading cache: {}", e);
         }
     }
     fn eval_event(&mut self) {
         if input::is_key_pressed(KeyCode::Q) {
+            self.gameplay.update_highest_score();
             match self.game_state {
                 GameState::SinglePlayer => self.game_state = GameState::MainMenu,
                 GameState::MainMenu => {
-                    self.view.reset_score();
-                    if let Err(e) = self.view.write_cache() {
-                        eprint!("error writing cache: {}", e);
+                    self.gameplay.reset_score();
+                    if let Err(e) = self.gameplay.write_cache() {
+                        eprintln!("error writing cache: {}", e);
                     }
                     self.should_quit = true
                 }
             }
         } else if input::is_key_pressed(KeyCode::R) {
             self.game_state = GameState::SinglePlayer;
-            self.view.restart()
+            self.gameplay.restart()
         }
     }
 }

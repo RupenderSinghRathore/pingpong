@@ -1,4 +1,4 @@
-use super::gameplay::GamePlay;
+use super::gameplay::Gameplay;
 use color::Color;
 use macroquad::text::TextParams;
 use macroquad::{color, shapes, text, window};
@@ -7,8 +7,6 @@ use window::{screen_height, screen_width};
 const CYAN: Color = color::Color::from_hex(0x42efab);
 pub(super) const FOREGROUND: Color = CYAN;
 
-// TODO: Implement history based collisions
-
 pub(super) fn x_percentage(per: f32) -> f32 {
     screen_width() * (per) / 100.0
 }
@@ -16,7 +14,7 @@ pub(super) fn y_percentage(per: f32) -> f32 {
     screen_height() * (per) / 100.0
 }
 
-impl GamePlay {
+impl Gameplay {
     pub fn render_frame(&mut self) {
         let paddle = &self.paddle;
         shapes::draw_rectangle(
