@@ -67,7 +67,8 @@ impl Game {
             }
         } else if input::is_key_pressed(KeyCode::R) {
             self.game_state = GameState::SinglePlayer;
-            self.gameplay.restart()
+            self.gameplay.restart_ui();
+            self.gameplay.reset_score();
         } else if input::is_key_pressed(KeyCode::P) {
             self.gameplay.show_fps = !self.gameplay.show_fps;
         }

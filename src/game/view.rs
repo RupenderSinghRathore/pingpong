@@ -44,6 +44,7 @@ impl Gameplay {
         if self.size.width != w || self.size.height != h {
             self.size.width = w;
             self.size.height = h;
+            self.resize_ui();
         }
     }
     pub fn main_menu(&mut self) {

@@ -1,4 +1,5 @@
 use super::gameplay::{Ball, GameEvent, Gameplay, Paddle};
+use super::view::{x_percentage, y_percentage};
 use input::is_key_down;
 use macroquad::input;
 use macroquad::miniquad::KeyCode;
@@ -85,9 +86,15 @@ impl Gameplay {
             ball.x = ball_impact_x;
         }
     }
-    pub fn restart(&mut self) {
+    pub fn restart_ui(&mut self) {
         self.paddle = Paddle::default();
         self.ball = Ball::default();
-        self.score.curr = 0.0;
+    }
+    pub fn resize_ui(&mut self) {
+        self.paddle.width= x_percentage(10.0);
+        self.paddle.height= y_percentage(1.0);
+        self.paddle.y = y_percentage(95.0);
+        self.ball.radius = x_percentage(1.0);
+
     }
 }
