@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use color::Color;
 use macroquad::miniquad::KeyCode;
 use macroquad::{color, input, window};
@@ -41,6 +43,7 @@ impl Game {
                 }
             }
             self.eval_event();
+            std::thread::sleep(Duration::from_millis(16));
             window::next_frame().await
         }
     }
@@ -65,6 +68,8 @@ impl Game {
         } else if input::is_key_pressed(KeyCode::R) {
             self.game_state = GameState::SinglePlayer;
             self.gameplay.restart()
+        } else if input::is_key_pressed(KeyCode::P) {
+            self.gameplay.show_fps = !self.gameplay.show_fps;
         }
     }
 }

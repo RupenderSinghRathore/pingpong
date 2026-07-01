@@ -17,6 +17,17 @@ pub(super) fn y_percentage(per: f32) -> f32 {
 impl Gameplay {
     pub fn render_frame(&mut self) {
         self.handle_resize();
+
+        if self.show_fps {
+            text::draw_text(
+                format!("{}", macroquad::time::get_fps()),
+                5.0,
+                20.0,
+                self.writer_settings.font_size as f32,
+                self.writer_settings.color,
+            );
+        }
+
         let paddle = &self.paddle;
         shapes::draw_rectangle(
             paddle.x,
@@ -44,6 +55,7 @@ impl Gameplay {
             rotation: self.writer_settings.rotation,
             color: self.writer_settings.color,
         };
+
         let main_msg = format!(
             "Your Score: {}, Highest Score: {}",
             self.score.curr, self.score.highest

@@ -138,6 +138,7 @@ pub(super) struct Gameplay {
     pub(super) size: Size,
     pub(super) paddle: Paddle,
     pub(super) ball: Ball,
+    pub(super) show_fps: bool,
     pub(super) score: GameScore,
     pub(super) writer_settings: WriterSettings,
 }
