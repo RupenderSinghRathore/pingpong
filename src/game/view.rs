@@ -19,12 +19,11 @@ impl Gameplay {
         self.handle_resize();
 
         if self.show_fps {
-            text::draw_text(
+            text::draw_text_ex(
                 format!("{}", macroquad::time::get_fps()),
-                5.0,
-                20.0,
-                self.writer_settings.font_size as f32,
-                self.writer_settings.color,
+                self.fps.x,
+                self.fps.y,
+                self.construct_textparams(),
             );
         }
 
@@ -48,14 +47,7 @@ impl Gameplay {
         }
     }
     pub fn main_menu(&mut self) {
-        let textparams = TextParams {
-            font: Some(&self.writer_settings.font),
-            font_size: self.writer_settings.font_size,
-            font_scale: self.writer_settings.font_scale,
-            font_scale_aspect: self.writer_settings.font_aspect_ratio,
-            rotation: self.writer_settings.rotation,
-            color: self.writer_settings.color,
-        };
+        let textparams = self.construct_textparams();
 
         let main_msg = format!(
             "Your Score: {}, Highest Score: {}",
@@ -89,6 +81,16 @@ impl Gameplay {
             let y_pos = y_percentage(y_gap);
             text::draw_text_ex(msg, x_pos, y_pos, textparams.clone());
             y_gap += 10.0;
+        }
+    }
+    fn construct_textparams(&self) -> TextParams<'_> {
+        TextParams {
+            font: Some(&self.writer_settings.font),
+            font_size: self.writer_settings.font_size,
+            font_scale: self.writer_settings.font_scale,
+            font_scale_aspect: self.writer_settings.font_aspect_ratio,
+            rotation: self.writer_settings.rotation,
+            color: self.writer_settings.color,
         }
     }
 }

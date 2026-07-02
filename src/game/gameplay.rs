@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use window::{screen_height, screen_width};
 
 const INITIAL_VELOCITY: f32 = 250.0; // Movement per second
-const PADDLE_SPEED: f32 = 450.0;
+const PADDLE_SPEED: f32 = 400.0;
 
 // Font defaults
 const FIRACODENERDFONT_REGULAR: &[u8] =
@@ -68,11 +68,25 @@ impl Default for Ball {
             y: y_percentage(50.0),
             prev_x: 0.0,
             prev_y: 0.0,
-            x_vel: INITIAL_VELOCITY * x_dir,
-            y_vel: INITIAL_VELOCITY * y_dir,
+            x_vel: (INITIAL_VELOCITY) * x_dir,
+            y_vel: (INITIAL_VELOCITY) * y_dir,
             acc: 1.0,
-            radius: x_percentage(1.0),
+            radius: x_percentage(1.5),
             color: FOREGROUND,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(super) struct Fps {
+    pub(super) x: f32,
+    pub(super) y: f32,
+}
+impl Default for Fps {
+    fn default() -> Self {
+        Self {
+            x: x_percentage(1.0),
+            y: y_percentage(4.0),
         }
     }
 }
@@ -141,4 +155,5 @@ pub(super) struct Gameplay {
     pub(super) show_fps: bool,
     pub(super) score: GameScore,
     pub(super) writer_settings: WriterSettings,
+    pub(super) fps: Fps,
 }
