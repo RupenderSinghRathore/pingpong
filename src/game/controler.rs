@@ -79,11 +79,16 @@ impl Gameplay {
             && ball_impact_x <= paddle_impact_right
         {
             ball.y_vel *= -1.0;
-            ball.acc += 0.1;
             paddle.acc += 0.1;
             self.score.curr += 1.0;
             ball.y = paddle.y - ball.radius;
             ball.x = ball_impact_x;
+            let diff = (paddle.x - paddle.prev_x) * (ball.x - ball.prev_x);
+            if diff > 0.0 {
+                ball.acc += 0.5;
+            } else if diff < 0.0 {
+                ball.acc -= 0.5;
+            }
         }
     }
     pub fn restart_ui(&mut self) {
@@ -91,10 +96,9 @@ impl Gameplay {
         self.ball = Ball::default();
     }
     pub fn resize_ui(&mut self) {
-        self.paddle.width= x_percentage(10.0);
-        self.paddle.height= y_percentage(1.0);
+        self.paddle.width = x_percentage(10.0);
+        self.paddle.height = y_percentage(1.0);
         self.paddle.y = y_percentage(95.0);
         self.ball.radius = x_percentage(1.0);
-
     }
 }
