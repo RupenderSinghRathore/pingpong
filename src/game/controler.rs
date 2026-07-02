@@ -88,6 +88,8 @@ impl Gameplay {
                 ball.acc += 0.5;
             } else if diff < 0.0 {
                 ball.acc -= 0.5;
+            } else {
+                ball.acc += 0.1;
             }
         }
     }

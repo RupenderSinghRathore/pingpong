@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use color::Color;
+use macroquad::input::get_last_key_pressed;
 use macroquad::miniquad::KeyCode;
 use macroquad::{color, input, window};
 
@@ -53,24 +54,33 @@ impl Game {
         }
     }
     fn eval_event(&mut self) {
-        if input::is_quit_requested() || input::is_key_pressed(KeyCode::Q) {
-            self.gameplay.update_highest_score();
-            match self.game_state {
-                GameState::SinglePlayer => self.game_state = GameState::MainMenu,
-                GameState::MainMenu => {
+        if let Some(key) = get_last_key_pressed() {
+            match key {
+                KeyCode::Q => self.close_event(),
+                KeyCode::R => {
+                    self.game_state = GameState::SinglePlayer;
+                    self.gameplay.restart_ui();
                     self.gameplay.reset_score();
-                    if let Err(e) = self.gameplay.write_cache() {
-                        eprintln!("error writing cache: {}", e);
-                    }
-                    self.should_quit = true
                 }
+                KeyCode::P => self.gameplay.show_fps = !self.gameplay.show_fps,
+                _ => (),
             }
-        } else if input::is_key_pressed(KeyCode::R) {
-            self.game_state = GameState::SinglePlayer;
-            self.gameplay.restart_ui();
-            self.gameplay.reset_score();
-        } else if input::is_key_pressed(KeyCode::P) {
-            self.gameplay.show_fps = !self.gameplay.show_fps;
+        }
+        if input::is_quit_requested() {
+            self.close_event();
+        }
+    }
+    fn close_event(&mut self) {
+        self.gameplay.update_highest_score();
+        match self.game_state {
+            GameState::SinglePlayer => self.game_state = GameState::MainMenu,
+            GameState::MainMenu => {
+                self.gameplay.reset_score();
+                if let Err(e) = self.gameplay.write_cache() {
+                    eprintln!("error writing cache: {}", e);
+                }
+                self.should_quit = true
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
 use super::view::FOREGROUND;
 use super::view::{x_percentage, y_percentage};
 use color::Color;
-use macroquad::text::{Font, load_ttf_font_from_bytes};
-use macroquad::{color, text, window};
+use macroquad::text::{Font, get_default_font};
+use macroquad::{color, window};
 use serde::{Deserialize, Serialize};
 use window::{screen_height, screen_width};
 
@@ -10,8 +10,6 @@ const INITIAL_VELOCITY: f32 = 250.0; // Movement per second
 const PADDLE_SPEED: f32 = 400.0;
 
 // Font defaults
-const FIRACODENERDFONT_REGULAR: &[u8] =
-    include_bytes!("/usr/share/fonts/TTF/FiraCodeNerdFont-Regular.ttf");
 const FONT_SIZE: u16 = 25;
 const FONT_SCALE: f32 = 1.0;
 const FONT_ASPECT_RATIO: f32 = 1.0;
@@ -117,15 +115,8 @@ pub(super) struct WriterSettings {
 }
 impl Default for WriterSettings {
     fn default() -> Self {
-        let font = match load_ttf_font_from_bytes(FIRACODENERDFONT_REGULAR) {
-            Ok(f) => f,
-            Err(_) => {
-                eprintln!("FiraCodeNerdFont-Regular not available, using defaults");
-                text::get_default_font()
-            }
-        };
         Self {
-            font,
+            font: get_default_font(),
             font_size: FONT_SIZE,
             font_scale: FONT_SCALE,
             font_aspect_ratio: FONT_ASPECT_RATIO,
